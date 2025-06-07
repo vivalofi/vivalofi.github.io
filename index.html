@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Radio with Video Background</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+
+    video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    /* Dim overlay */
+    #dim-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.45);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hacker-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      color: #00ff41;
+      text-shadow: 0 0 8px #00ff41, 0 0 2px #000;
+      letter-spacing: 1px;
+      font-size: 1.2em;
+      z-index: 3;
+      user-select: none;
+    }
+
+    #station-name {
+      position: fixed;
+      top: 18px;
+      left: 24px;
+      z-index: 3;
+    }
+
+    #instructions {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      z-index: 3;
+      text-align: right;
+    }
+
+    #message {
+      position: fixed;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      /* hacker style */
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      color: #00ff41;
+      text-shadow: 0 0 8px #00ff41, 0 0 2px #000;
+      font-size: 1.5em;
+      letter-spacing: 1px;
+      z-index: 2;
+      user-select: none;
+    }
+
+    audio {
+      display: none;
+    }
+
+    #creator-box {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      background: rgba(0,0,0,0.65);
+      border-radius: 10px;
+      padding: 10px 16px 10px 10px;
+      z-index: 4;
+      box-shadow: 0 0 8px #000;
+    }
+
+    #creator-pic {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      margin-right: 12px;
+      border: 2px solid #00ff41;
+      box-shadow: 0 0 8px #00ff41;
+      object-fit: cover;
+    }
+
+    #creator-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-weight: bold;
+      color: #00ff41;
+      text-shadow: 0 0 8px #00ff41, 0 0 2px #000;
+      font-size: 1em;
+      user-select: none;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background video -->
+  <video id="bg-video" autoplay loop muted playsinline>
+    <source id="bg-video-src" src="backgrounds/background.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <!-- Dim overlay -->
+  <div id="dim-overlay"></div>
+
+  <!-- Station name (top left) -->
+  <div id="station-name" class="hacker-text"></div>
+
+  <!-- Instructions (top right) -->
+  <div id="instructions" class="hacker-text">
+    <!-- Will be set by JS -->
+  </div>
+
+  <!-- Moved-up message -->
+  <div id="message">Tap anywhere on screen to start radio</div>
+
+  <!-- Audio stream -->
+  <audio id="radio" autoplay muted playsinline>
+    <source id="radio-src" src="http://44.201.116.129:8000/stream" type="audio/mpeg" />
+  </audio>
+
+  <!-- Switch sound effect -->
+  <audio id="switch-sound" src="switch.mp3" preload="auto"></audio>
+
+  <!-- Creator box (bottom right) -->
+  <div id="creator-box">
+    <img id="creator-pic" src="https://pbs.twimg.com/profile_images/1837632855754637312/5-8Ryd9v_400x400.jpg" alt="Shaphat Twitter Profile" />
+    <div id="creator-text">
+      Give the creator a follow:<br>
+      <a href="https://twitter.com/shaphat_" target="_blank" style="color:#00ff41;text-decoration:underline;font-weight:bold;">@shaphat_</a>
+    </div>
+  </div>
+
+  <script>
+    // List of stations: { name, audio, video }
+    const stations = [
+      {
+        name: "radio #1",
+        audio: "https://vivalofi.kriblink.com/stream",
+        video: "backgrounds/background.mp4"
+      },
+      {
+        name: "radio #2",
+        audio: "https://vivalofi.kriblink.com/radio2",
+        video: "backgrounds/background02.mp4"
+      },
+      {
+        name: "radio #3",
+        audio: "https://vivalofi.kriblink.com/radio3",
+        video: "backgrounds/background03.mp4"
+      },
+      {
+        name: "radio #4",
+        audio: "https://vivalofi.kriblink.com/radio4",
+        video: "backgrounds/background04.mp4"
+      }
+    ];
+
+    let currentStation = 0;
+
+    function setStation(index) {
+      const radio = document.getElementById('radio');
+      const radioSrc = document.getElementById('radio-src');
+      const bgVideo = document.getElementById('bg-video');
+      const bgVideoSrc = document.getElementById('bg-video-src');
+      const stationName = document.getElementById('station-name');
+
+      // Pause audio and video before switching
+      radio.pause();
+      bgVideo.pause();
+
+      // Update sources
+      radioSrc.src = stations[index].audio;
+      bgVideoSrc.src = stations[index].video;
+
+      // Reload audio and video
+      radio.load();
+      bgVideo.load();
+
+      // Play audio and video
+      radio.play();
+      bgVideo.play();
+
+      // Update station name
+      stationName.textContent = stations[index].name;
+    }
+
+    // Set initial station name on load and update instructions for device
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('station-name').textContent = stations[currentStation].name;
+
+      const instructions = document.getElementById('instructions');
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent);
+      if (isMobile) {
+        instructions.innerHTML = 'Double tap to switch stations';
+      } else {
+        instructions.innerHTML = 'Use <b>&larr;</b> / <b>&rarr;</b> to switch stations';
+      }
+    });
+
+    document.body.addEventListener('click', () => {
+      const audio = document.getElementById('radio');
+      const message = document.getElementById('message');
+      if (audio.muted) {
+        audio.muted = false;
+        audio.play();
+        message.style.display = 'none';
+      }
+    }, { once: true });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const switchSound = document.getElementById('switch-sound');
+        switchSound.currentTime = 0;
+        switchSound.play();
+
+        if (e.key === 'ArrowRight') {
+          currentStation = (currentStation + 1) % stations.length;
+        } else if (e.key === 'ArrowLeft') {
+          currentStation = (currentStation - 1 + stations.length) % stations.length;
+        }
+        setTimeout(() => setStation(currentStation), 200); // Delay to let switch sound play
+      }
+    });
+
+    // Double tap detection for mobile
+    let lastTap = 0;
+    document.body.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 400) {
+        // Double tap detected: switch to next station
+        const switchSound = document.getElementById('switch-sound');
+        switchSound.currentTime = 0;
+        switchSound.play();
+        currentStation = (currentStation + 1) % stations.length;
+        setTimeout(() => setStation(currentStation), 200);
+      }
+      lastTap = now;
+    });
+  </script>
+
+</body>
+</html>
